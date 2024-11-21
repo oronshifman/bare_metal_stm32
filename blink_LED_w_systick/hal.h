@@ -102,6 +102,52 @@ static inline void gpio_set_reset_output(uint8_t pin, bool value)
 
 /********************************************************************************************
  * 
+ * SisTick
+ * 
+ ********************************************************************************************/
+#define SYSCLK_FREQ (48000000)
+
+struct systick
+{
+    volatile uint32_t CSR,   // control and status register
+                      RVR,   // reload value register
+                      CVR,   // current value register
+                      CALIB; // calibration value register
+};
+#define SYSTICK ((struct systick *)0xe000e010)
+
+/**
+ * This should be defined in main.c
+ */
+extern volatile uint32_t milliseconds_since_reset;
+
+/**
+ * @brief used for initiating systick
+ * @param ticks The number of clock ticks to initialize systick with
+ * 
+ * Explanation:
+ *      the following line will generate a SysTick interrupt every millisecond
+ *          systick_init(SYSCLK_FREQ / 1000);
+ */
+static inline void systick_init(uint32_t ticks)
+{
+    if (ticks - 1 > 0xffffff)
+    {
+        return;
+    }
+
+    SYSTICK->RVR = ticks - 1; 
+    SYSTICK->CVR = 0;
+    SYSTICK->CSR = BIT(0) | BIT(1) | BIT(2);
+    // RCC->APB2ENR |= BIT(14) // On the board used in the guide ther is a need to enable the 
+                               // the clock for SysTick. On the STM32C031C6 board, the SysTick
+                               // clock is enabled on MCU startup as the default value in 
+                               // RCC_CR. This is, HSION is set to 1 on reset.
+                                  
+}
+
+/********************************************************************************************
+ * 
  * RCC
  * 
  ********************************************************************************************/
