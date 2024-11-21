@@ -48,8 +48,6 @@ struct gpio
     volatile uint32_t MODER, OTYPER, OSPEEDR, PUPDR, IDR, ODR, BSRR, LCKR, AFRL, AFRH, BRR;
 };
 
-#define GPIO_BITS_PER_PIN_MODER (2)
-
 /**
  *  @brief creates a pointer to struct gpio for the requested bank (A, B, C, D or F)
  *
@@ -58,6 +56,8 @@ struct gpio
  *  where pin is any uint8_t value created by the PIN() macro
  */
 #define GPIO(bank) ((struct gpio *)(0x50000000 + 0x400 * (bank)))
+
+#define GPIO_BITS_PER_PIN_MODER (2)
 
 enum gpio_mode
 {
@@ -76,7 +76,7 @@ static inline void gpio_set_mode(uint8_t pin, enum gpio_mode mode)
     struct gpio *gpio = GPIO(PINBANK(pin));
     uint8_t pin_num = PINNO(pin);
     gpio->MODER &= ~(0b11U << (pin_num * GPIO_BITS_PER_PIN_MODER));
-    gpio->MODER |= mode << (pin_num * GPIO_BITS_PER_PIN_MODER);
+    gpio->MODER |= (mode & 0b11U) << (pin_num * GPIO_BITS_PER_PIN_MODER);
 }
 
 /**
@@ -87,7 +87,7 @@ static inline void gpio_set_mode(uint8_t pin, enum gpio_mode mode)
 static inline void gpio_set_reset_output(uint8_t pin, bool value)
 {
     struct gpio *gpio = GPIO(PINBANK(pin));
-    gpio->BSRR = BIT(PINNO(pin)) << (value ? 0 : 16);
+    gpio->BSRR = (1U << PINNO(pin)) << (value ? 0 : 16);
 }
 
 /********************************************************************************************
@@ -95,11 +95,10 @@ static inline void gpio_set_reset_output(uint8_t pin, bool value)
  * RCC
  * 
  ********************************************************************************************/
-
 struct rcc
 {
-    volatile uint32_t CR, ICRSCR, CFGR, CRRCR, CIER, CIFR, CICR, IOPRSTR, AHBRSTR, APBRSTR1, 
-    APBRSTR2, IOPENR, AHBENR, ABPENR1, APBENR2, IOPSMENR, AHPSMENR, APBSMENR1, APBSMENR2, 
+    volatile uint32_t CR, ICRSCR, CFGR, RESERVED[2], CRRCR, CIER, CIFR, CICR, IOPRSTR, AHBRSTR, 
+    APBRSTR1, APBRSTR2, IOPENR, AHBENR, ABPENR1, APBENR2, IOPSMENR, AHPSMENR, APBSMENR1, APBSMENR2, 
     CCIPR, CCIPR2, CSR1, CSR2;
 };
 #define RCC ((struct rcc *)0x40021000)
@@ -109,7 +108,6 @@ struct rcc
  * GENERAL FUNCTION 
  * 
  ********************************************************************************************/
-
 /**
  * @brief an inaccurate delay function
  * @param count number of NOP to execute
