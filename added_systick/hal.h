@@ -40,6 +40,43 @@
 
 /********************************************************************************************
  * 
+ * RCC
+ * 
+ ********************************************************************************************/
+struct rcc
+{
+    volatile uint32_t CR,           // control register
+                      ICRSCR,       // internal clock source calibration register 
+                      CFGR,         // configuration register 
+                      RESERVED[2], 
+                      CRRCR,        // clock recovery RC register 
+                      CIER,         // clock interrupt enable register 
+                      CIFR,         // clock interrupt flag register 
+                      CICR,         // clock interrupt clear register 
+                      IOPRSTR,      // I/O port reset register 
+                      AHBRSTR,      // AHB peripheral reset register 
+                      APBRSTR1,     // APB peripheral reset register 1 
+                      APBRSTR2,     // APB peripheral reset register 2 
+                      IOPENR,       // I/O port clock enable register
+                      AHBENR,       // AHB peripheral clock enable register
+                      ABPENR1,      // APB peripheral clock enable register 1 
+                      APBENR2,      // APB peripheral clock enable register 2
+                      IOPSMENR,     // I/O port in Sleep mode clock enable register 
+                      AHPSMENR,     // AHB peripheral clock enable in Sleep/Stop mode register 
+                      APBSMENR1,    // APB peripheral clock enable in Sleep/Stop mode register 1 
+                      APBSMENR2,    // APB peripheral clock enable in Sleep/Stop mode register 2
+                      CCIPR,        // peripherals independent clock configuration register 1 
+                      CCIPR2,       // peripherals independent clock configuration register 2
+                      CSR1,         // control/status register 1 
+                      CSR2;         // control/status register 2
+};
+#define RCC ((struct rcc *)0x40021000)
+
+#define RCC_CR_HSIDIV_POS (11)
+#define RCC_CR_HSIDIV_MASK (0b111 << RCC_CR_HSIDIV_POS)
+
+/********************************************************************************************
+ * 
  * GPIO
  * 
  ********************************************************************************************/
@@ -105,7 +142,7 @@ static inline void gpio_set_reset_output(uint8_t pin, bool value)
  * SisTick
  * 
  ********************************************************************************************/
-#define SYSCLK_FREQ (48000000)
+#define HSI48_FREQ (48000000)
 
 struct systick
 {
@@ -146,39 +183,16 @@ static inline void systick_init(uint32_t ticks)
                                   
 }
 
-/********************************************************************************************
- * 
- * RCC
- * 
- ********************************************************************************************/
-struct rcc
+/**
+ * @brief calculates the systick frequency as a product of HSI48 / HSIDIV. This is vaguely stated in
+ *        the reference manual, page 113 where it says that HSISYS is derived from HSI48 through 
+ *        division in a factor programmable (meaning HSIDIV) from 1 to 128.
+ * @return systick frequency in Hz
+ */
+static inline uint32_t systick_get_freq(void)
 {
-    volatile uint32_t CR,           // control register
-                      ICRSCR,       // internal clock source calibration register 
-                      CFGR,         // configuration register 
-                      RESERVED[2], 
-                      CRRCR,        // clock recovery RC register 
-                      CIER,         // clock interrupt enable register 
-                      CIFR,         // clock interrupt flag register 
-                      CICR,         // clock interrupt clear register 
-                      IOPRSTR,      // I/O port reset register 
-                      AHBRSTR,      // AHB peripheral reset register 
-                      APBRSTR1,     // APB peripheral reset register 1 
-                      APBRSTR2,     // APB peripheral reset register 2 
-                      IOPENR,       // I/O port clock enable register
-                      AHBENR,       // AHB peripheral clock enable register
-                      ABPENR1,      // APB peripheral clock enable register 1 
-                      APBENR2,      // APB peripheral clock enable register 2
-                      IOPSMENR,     // I/O port in Sleep mode clock enable register 
-                      AHPSMENR,     // AHB peripheral clock enable in Sleep/Stop mode register 
-                      APBSMENR1,    // APB peripheral clock enable in Sleep/Stop mode register 1 
-                      APBSMENR2,    // APB peripheral clock enable in Sleep/Stop mode register 2
-                      CCIPR,        // peripherals independent clock configuration register 1 
-                      CCIPR2,       // peripherals independent clock configuration register 2
-                      CSR1,         // control/status register 1 
-                      CSR2;         // control/status register 2
-};
-#define RCC ((struct rcc *)0x40021000)
+    return HSI48_FREQ / (BIT((RCC->CR & (RCC_CR_HSIDIV_MASK)) >> RCC_CR_HSIDIV_POS));
+}
 
 /********************************************************************************************
  * 
