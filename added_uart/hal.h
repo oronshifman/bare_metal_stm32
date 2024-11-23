@@ -176,9 +176,9 @@ struct systick
 #define SYSTICK ((struct systick *)0xe000e010)
 
 /**
- * This should be defined in main.c
+ * Global SysTick variables
  */
-extern volatile uint32_t milliseconds_since_reset;
+volatile uint32_t milliseconds_since_reset = 0;
 
 /**
  * @brief used for initiating systick
@@ -200,6 +200,24 @@ static inline void systick_init(uint32_t ticks)
                                // clock is enabled on MCU startup as the default value in 
                                // RCC_CR. This is, HSION is set to 1 on reset.
                                   
+}
+
+// TODO(23.11.24): finish doc
+/**
+ * @brief
+ * @param timer
+ * @param period
+ * @param now
+ * @return
+ */
+bool is_timer_expired(uint32_t *timer, uint32_t period, uint32_t now) 
+{
+    if (now + period < *timer) *timer = 0;               // Time wrapped? Reset timer
+    if (*timer == 0) *timer = now + period;              // First poll? Set expiration
+    if (*timer > now) return false;                      // Not expired yet, return
+    *timer = (now - *timer) > period ? now + period : 
+                                       *timer + period;  // Next expiration time
+    return true;                                         // Expired, return true
 }
 
 /**

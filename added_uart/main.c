@@ -1,17 +1,4 @@
 #include "hal.h"
-#include "IRQs.h"
-
-volatile uint32_t milliseconds_since_reset = 0;
-
-bool is_timer_expired(uint32_t *timer, uint32_t period, uint32_t now) 
-{
-    if (now + period < *timer) *timer = 0;               // Time wrapped? Reset timer
-    if (*timer == 0) *timer = now + period;              // First poll? Set expiration
-    if (*timer > now) return false;                      // Not expired yet, return
-    *timer = (now - *timer) > period ? now + period : 
-                                       *timer + period;  // Next expiration time
-    return true;                                         // Expired, return true
-}
 
 int main(void)
 {
@@ -59,7 +46,8 @@ __attribute__((naked, noreturn)) void _reset(void)
     for (;;) (void) 0;  // Infinite loop
 }
 
-extern void _estack(void);  // Defined in link.ld
+extern void SysTick_Handler(void);  // Defined in IRQs.c
+extern void _estack(void);          // Defined in link.ld
 
 // 16 standard and 32 STM32-specific handlers
 __attribute__((section(".vectors"))) void (*const tab[16 + 32])(void) = 
