@@ -38,8 +38,7 @@ int main(void)
             gpio_set_reset_output(yellow_led, on);
             gpio_set_reset_output(red_led, on);
 
-            // usart_write_byte(USART2, 'b');
-            usart_write_buffer(USART2, "blink\r\n", 7); // TODO(22.11.24): debug this!!
+            usart_write_buffer(USART2, "blink\r\n", 7);
             
             on = !on;
         }
