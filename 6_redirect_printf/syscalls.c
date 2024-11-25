@@ -28,10 +28,11 @@ int _close(int fd)
 }
 
 // NOTE(23.11.24): STUB
-int _fstat(int file, struct stat * st)
+int _fstat(int fd, struct stat * st)
 {
-    (void) file, (void) st;
-    return -1;
+    if (fd < 0) return -1;
+    st->st_mode = S_IFCHR;
+    return 0;
 }
 
 // NOTE(23.11.24): STUB
